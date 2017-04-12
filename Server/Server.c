@@ -51,6 +51,8 @@ int main(int argc, const char * argv[]) {
     my_addr.sin_addr.s_addr = htonl(INADDR_ANY);
     int clientSokets = 0;
 
+    printf("Current time: %s",__TIME__);
+
     pthread_t threads[2];
 
     int sockfd = socket(AF_INET, SOCK_STREAM, 0);
@@ -59,7 +61,7 @@ int main(int argc, const char * argv[]) {
         perror("socket()");
     }
 
-    if (bind(sockfd, &my_addr, sizeof(my_addr)) == -1) {
+    if (bind(sockfd, (const struct sockaddr *) &my_addr, sizeof(my_addr)) == -1) {
         perror("bind()");
     }
 
@@ -70,7 +72,7 @@ int main(int argc, const char * argv[]) {
     struct sockaddr_in remote_host;
 
     while (i < 2) {
-        clientSokets = accept(sockfd, &remote_host, &sin_size);
+        clientSokets = accept(sockfd, (struct sockaddr *) &remote_host, &sin_size);
         int* new_sock = malloc(1);
         *new_sock = clientSokets;
 
@@ -88,6 +90,5 @@ int main(int argc, const char * argv[]) {
     pthread_join(threads[1], NULL);
     close(clientSokets);
     close(sockfd);
-    printf("Current time: %s",__TIME__);
     return 0;
 }

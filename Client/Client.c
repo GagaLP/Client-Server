@@ -26,7 +26,7 @@ void* threadOperation(int *arg){
     int serverMessageLength;
     char serverMessage[1024];
 
-    while ((serverMessageLength = recv(socket , serverMessage , 2000 , 0)) > 0) {
+    while ((serverMessageLength = (int) recv(socket , serverMessage , 2000 , 0)) > 0) {
         if (serverMessage != "q") {
             printf("%s\n", serverMessage);
         }
@@ -59,7 +59,7 @@ int main(int argc, const char * argv[]) {
         return 2;
     }
 
-    pthread_create(&thread, NULL, (void*(*)(void*)) &threadOperation, sockfd);
+    //pthread_create(&thread, NULL, (void*(*)(void*)) &threadOperation, (void *) sockfd);
 
     char test[1024];
 
@@ -71,7 +71,7 @@ int main(int argc, const char * argv[]) {
         }
     }while (strcmp(test, "q"));
 
-    pthread_join(thread, NULL);
+    //pthread_join(thread, NULL);
 
     close(sockfd);
 
