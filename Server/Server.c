@@ -59,10 +59,12 @@ int main(int argc, const char * argv[]) {
 
     if (sockfd == -1) {
         perror("socket()");
+        return 1;
     }
 
     if (bind(sockfd, (const struct sockaddr *) &my_addr, sizeof(my_addr)) == -1) {
         perror("bind()");
+        return 2;
     }
 
     printf("Warte auf Clients\n");
@@ -78,6 +80,7 @@ int main(int argc, const char * argv[]) {
 
         if (clientSokets == -1) {
             perror("accept()");
+            return 3;
         }
 
         printf("Client %d ist da\n", i);

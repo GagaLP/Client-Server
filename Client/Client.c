@@ -59,19 +59,25 @@ int main(int argc, const char * argv[]) {
         return 2;
     }
 
-    //pthread_create(&thread, NULL, (void*(*)(void*)) &threadOperation, (void *) sockfd);
+    int* momentsock = malloc(1);
+    *momentsock = sockfd;
+
+    pthread_create(&thread, NULL, (void*(*)(void*)) &threadOperation, momentsock);
 
     char test[1024];
 
     do{
         printf("Sende den Text: ");
-        scanf("%s",test);
+        scanf("%[^\n]s", test);
+        printf("%s", test);
+        getc(stdin);
         if (send(sockfd, test, sizeof(test), 0) < 0) {
             perror("send()");
+            return 3;
         }
     }while (strcmp(test, "q"));
 
-    //pthread_join(thread, NULL);
+    pthread_join(thread, NULL);
 
     close(sockfd);
 
