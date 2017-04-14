@@ -20,21 +20,23 @@
 #include <sys/wait.h>
 #include <sys/time.h>
 
+#define MAXLENGTH 1024
 
-
+char message[MAXLENGTH];
 
 void* threadOperation(int *arg){
     int socket = *arg;
     int serverMessageLength;
-    char serverMessage[1024];
+    char serverMessage[MAXLENGTH];
 
     while ((serverMessageLength = (int) recv(socket , serverMessage , 2000 , 0)) > 0) {
-        if (serverMessage != "q") {
+        if (strcmp(serverMessage, "q") != 0) {
             printf("%s\n", serverMessage);
+        } else {
+            printf("heii");
+            break;
         }
     }
-
-    printf("Client hat sich abgemeldet\n");
 
     free(arg);
     pthread_exit(NULL);
@@ -66,18 +68,17 @@ int main(int argc, const char * argv[]) {
 
     pthread_create(&thread, NULL, (void*(*)(void*)) &threadOperation, momentsock);
 
-    char test[1024];
+    char mess[MAXLENGTH];
 
     do{
         printf("Sende den Text: ");
-        scanf("%[^\n]s", test);
-        printf("%s\n", test);
+        scanf("%[^\n]s", mess);
         getc(stdin);
-        if (send(sockfd, test, sizeof(test), 0) < 0) {
+        if (send(sockfd, mess, sizeof(mess), 0) < 0) {
             perror("send()");
             return 3;
         }
-    }while (strcmp(test, "q"));
+    }while (strcmp(mess, "q"));
 
     pthread_join(thread, NULL);
 

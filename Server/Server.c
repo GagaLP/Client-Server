@@ -48,15 +48,11 @@ void* listenSocket(int *arg){
     char clientMessage[MAXLENGTH];
 
     while ((clientMessageLength = recv(socket, clientMessage , 2000 , 0)) > 0) {
-        if (strcmp(clientMessage, "q")) {
-            clear();
-            printf("%s\n", clientMessage);
-            strcpy(clientStruct1.message, clientMessage);
-            increaseSequenceNumber();
-        }
+        clear();
+        clientStruct1.sock = socket;
+        strcpy(clientStruct1.message, clientMessage);
+        increaseSequenceNumber();
     }
-
-    printf("Client hat sich abgemeldet\n");
 
     free(arg);
     pthread_exit(NULL);
@@ -64,18 +60,26 @@ void* listenSocket(int *arg){
 
 void* writeSocket(int *arg){
     int socket = *arg;
-
-    while (strcmp(clientStruct1.message, "q") != 0){
-        if (clientStruct1.sock != socket){
-            if (send(socket, clientStruct1.message, sizeof(clientStruct1.message), 0) < 0) {
-                perror("send()");
+    int last = 0;
+    while (1){
+        if (clientStruct1.sequence != last) {
+            if (clientStruct1.sock == socket) {
+                if(strcmp(clientStruct1.message, "q") == 0){
+                    if(send(socket, "q", sizeof("q"), 0) < 0) {
+                        perror("send()");
+                    }
+                    break;
+                }
+            } else {
+                if(send(socket, clientStruct1.message, sizeof(clientStruct1.message), 0) < 0) {
+                    perror("send()");
+                }
             }
+            last = clientStruct1.sequence;
         }
     }
 
     printf("Client hat sich abgemeldet\n");
-
-    free(arg);
     pthread_exit(NULL);
 }
 
@@ -127,10 +131,11 @@ int main(int argc, const char * argv[]) {
         i++;
     }
 
-    pthread_join(listenThreads[0], NULL);
-    pthread_join(listenThreads[1], NULL);
-    pthread_join(writeThreads[0], NULL);
-    pthread_join(writeThreads[1], NULL);
+    for (int j = 0; j < 2; ++j) {
+        pthread_join(listenThreads[j], NULL);
+        pthread_join(writeThreads[j], NULL);
+    }
+
     close(clientSokets);
     close(sockfd);
     return 0;
