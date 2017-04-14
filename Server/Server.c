@@ -24,16 +24,52 @@
 #include <sys/wait.h>
 #include <sys/time.h>
 
-#define clear() printf("\033[H\033[J");
+#define clear() printf("\033[H\033[J")
 
-void* threadOperation(int *arg){
+#define MAXLENGTH 1024
+
+struct clientStruct{
+    int sock;
+    int sequence;
+    char message[MAXLENGTH];
+}clientStruct1;
+
+void increaseSequenceNumber(){
+    if (clientStruct1.sequence != INT8_MAX){
+        clientStruct1.sequence ++;
+    } else {
+        clientStruct1.sequence = 0;
+    }
+}
+
+void* listenSocket(int *arg){
     int socket = *arg;
     long clientMessageLength;
-    char clientMessage[1024];
+    char clientMessage[MAXLENGTH];
 
     while ((clientMessageLength = recv(socket, clientMessage , 2000 , 0)) > 0) {
         if (strcmp(clientMessage, "q")) {
+            clear();
             printf("%s\n", clientMessage);
+            strcpy(clientStruct1.message, clientMessage);
+            increaseSequenceNumber();
+        }
+    }
+
+    printf("Client hat sich abgemeldet\n");
+
+    free(arg);
+    pthread_exit(NULL);
+}
+
+void* writeSocket(int *arg){
+    int socket = *arg;
+
+    while (strcmp(clientStruct1.message, "q") != 0){
+        if (clientStruct1.sock != socket){
+            if (send(socket, clientStruct1.message, sizeof(clientStruct1.message), 0) < 0) {
+                perror("send()");
+            }
         }
     }
 
@@ -51,9 +87,10 @@ int main(int argc, const char * argv[]) {
     my_addr.sin_addr.s_addr = htonl(INADDR_ANY);
     int clientSokets = 0;
 
-    printf("Current time: %s",__TIME__);
+    printf("Current time: %s\n",__TIME__);
 
-    pthread_t threads[2];
+    pthread_t listenThreads[2];
+    pthread_t writeThreads[2];
 
     int sockfd = socket(AF_INET, SOCK_STREAM, 0);
 
@@ -85,12 +122,15 @@ int main(int argc, const char * argv[]) {
 
         printf("Client %d ist da\n", i);
 
-        pthread_create(&threads[i], NULL, (void*(*)(void*)) &threadOperation, new_sock);
+        pthread_create(&listenThreads[i], NULL, (void*(*)(void*)) &listenSocket, new_sock);
+        pthread_create(&writeThreads[i], NULL, (void*(*)(void*)) &writeSocket, new_sock);
         i++;
     }
 
-    pthread_join(threads[0], NULL);
-    pthread_join(threads[1], NULL);
+    pthread_join(listenThreads[0], NULL);
+    pthread_join(listenThreads[1], NULL);
+    pthread_join(writeThreads[0], NULL);
+    pthread_join(writeThreads[1], NULL);
     close(clientSokets);
     close(sockfd);
     return 0;

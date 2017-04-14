@@ -21,6 +21,8 @@
 #include <sys/time.h>
 
 
+
+
 void* threadOperation(int *arg){
     int socket = *arg;
     int serverMessageLength;
@@ -69,7 +71,7 @@ int main(int argc, const char * argv[]) {
     do{
         printf("Sende den Text: ");
         scanf("%[^\n]s", test);
-        printf("%s", test);
+        printf("%s\n", test);
         getc(stdin);
         if (send(sockfd, test, sizeof(test), 0) < 0) {
             perror("send()");
